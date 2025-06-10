@@ -4,7 +4,11 @@ import "./index.css";
 const GRID_WIDTH = 9;
 const GRID_HEIGHT = 5;
 
-const CASES = {
+type CaseKey = 'case1' | 'case2' | 'case3' | 'case4';
+type ObjectType = { w: number; h: number; totalCount: number; count: number };
+type Cell = [number, number];
+
+const CASES: Record<CaseKey, { w: number; h: number; totalCount: number }[]> = {
   case1: [
     { w: 3, h: 2, totalCount: 2 },
     { w: 3, h: 1, totalCount: 5 },
@@ -26,9 +30,6 @@ const CASES = {
     { w: 2, h: 1, totalCount: 6 }
   ]
 };
-
-type ObjectType = { w: number; h: number; count: number };
-type Cell = [number, number];
 
 function calculateProbabilities(
   objects: ObjectType[],
@@ -114,10 +115,14 @@ function calculateProbabilities(
 }
 
 function App() {
-  const [caseKey, setCaseKey] = useState("case1");
-  const [objects, setObjects] = useState(CASES["case1"].map(o => ({ ...o, count: o.totalCount })));
-  const [foundCounts, setFoundCounts] = useState(objects.map(() => 0));
-  const [openedCells, setOpenedCells] = useState([]);
+  const [caseKey, setCaseKey] = useState<CaseKey>('case1');
+  const [objects, setObjects] = useState<ObjectType[]>(() =>
+    CASES["case1"].map(o => ({ ...o, count: o.totalCount }))
+  );
+  const [foundCounts, setFoundCounts] = useState<number[]>(() =>
+    CASES["case1"].map(() => 0)
+  );
+  const [openedCells, setOpenedCells] = useState<Cell[]>([]);
 
   useEffect(() => {
     setObjects(CASES[caseKey].map(o => ({ ...o, count: o.totalCount })));
@@ -132,10 +137,10 @@ function App() {
         count: Math.max(0, obj.totalCount - foundCounts[i])
       }))
     );
-    // eslint-disable-next-line
   }, [foundCounts]);
 
   const probabilities = calculateProbabilities(objects, openedCells);
+
 
   // 확률이 높은 순서대로 정렬
   let probabilityList = [];
@@ -175,7 +180,7 @@ function App() {
     }
   }
 
-  function handleCellClick(x, y) {
+  function handleCellClick(x: number, y: number) {
     setOpenedCells(prev => {
       const exists = prev.some(([px, py]) => px === x && py === y);
       if (exists) {
@@ -197,7 +202,7 @@ function App() {
               id="caseSelect"
               className="border rounded-lg px-3 py-1.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
               value={caseKey}
-              onChange={e => setCaseKey(e.target.value)}
+              onChange={e => setCaseKey(e.target.value as CaseKey)}
             >
               <option value="case1">1, 4 회차</option>
               <option value="case2">2, 5 회차</option>
