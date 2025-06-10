@@ -27,30 +27,32 @@ const CASES = {
   ]
 };
 
-function calculateProbabilities(objects, openedCells) {
-  // ... (동일, 복붙)
+type ObjectType = { w: number; h: number; count: number };
+type Cell = [number, number];
+
+function calculateProbabilities(
+  objects: ObjectType[],
+  openedCells: Cell[]
+): number[][] {
   const gridWidth = 9;
   const gridHeight = 5;
 
-  let probabilities = Array.from({ length: gridHeight }, () =>
+  // 2차원 배열 0.0 초기화
+  let probabilities: number[][] = Array.from({ length: gridHeight }, () =>
     Array(gridWidth).fill(0.0)
   );
 
   let openedSet = new Set(openedCells.map(([x, y]) => `${y},${x}`));
 
-  function getOrientations(w, h) {
-    if (w === h) {
-      return [{ w, h }];
-    } else {
-      return [{ w, h }, { w: h, h: w }];
-    }
+  function getOrientations(w: number, h: number): { w: number; h: number }[] {
+    return w === h ? [{ w, h }] : [{ w, h }, { w: h, h: w }];
   }
 
   for (let obj of objects) {
     const { w: w0, h: h0, count } = obj;
     if (count <= 0) continue;
     const orientations = getOrientations(w0, h0);
-    let placements = [];
+    let placements: { cells: [number, number][] }[] = [];
     let totalPlacements = 0;
 
     for (let { w, h } of orientations) {
@@ -70,20 +72,18 @@ function calculateProbabilities(objects, openedCells) {
             }
           }
           if (!overlapsOpenedEmpty) {
-            placements.push({
-              cells: [].concat(
-                ...Array.from({ length: h }, (_, dy) =>
-                  Array.from({ length: w }, (_, dx) => [y + dy, x + dx])
-                )
-              )
-            });
+            // 타입을 명확히: [number, number][]
+            const cells: [number, number][] = Array.from({ length: h }, (_, dy) =>
+              Array.from({ length: w }, (_, dx) => [y + dy, x + dx] as [number, number])
+            ).flat();
+            placements.push({ cells });
             totalPlacements += 1;
           }
         }
       }
     }
 
-    let cellCounts = {};
+    let cellCounts: Record<string, number> = {};
     for (let placement of placements) {
       for (let [cellY, cellX] of placement.cells) {
         const key = `${cellY},${cellX}`;
@@ -91,7 +91,7 @@ function calculateProbabilities(objects, openedCells) {
       }
     }
 
-    let f_k = {};
+    let f_k: Record<string, number> = {};
     for (let key in cellCounts) {
       f_k[key] = cellCounts[key] / totalPlacements;
     }
@@ -104,6 +104,7 @@ function calculateProbabilities(objects, openedCells) {
     }
   }
 
+  // 열린 칸은 0 확률
   for (let cell of openedSet) {
     const [cellY, cellX] = cell.split(",").map(Number);
     probabilities[cellY][cellX] = 0.0;
